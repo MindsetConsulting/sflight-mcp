@@ -10,15 +10,22 @@
     "@sap/xssec": "^4",
     "@gavdi/cap-mcp": "^1",
     "express": "^4",
-    "hana-cli": "^3"
+    "hana-cli": "^3",
+    "@modelcontextprotocol/sdk": "^1"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^2",
-    "@sap/cds-dk": "^9"
+    "@sap/cds-dk": "^9",
+    "cds-swagger-ui-express": "^0",
+    "@sap/cds-lsp": "^9",
+    "@sap/eslint-plugin-cds": "^4",
+    "@cap-js/cds-typer": "^0"
   },
   "scripts": {
     "start": "cds-serve",
-    "watch": "cds watch"
+    "watch": "cds watch",
+    "build": "cds build && cds build --production",
+    "test": "cds test"
   },
   "cds": {
     "mcp": {
