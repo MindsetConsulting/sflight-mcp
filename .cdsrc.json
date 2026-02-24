@@ -1,0 +1,30 @@
+{
+  "build": {
+    "target": "gen",
+    "tasks": [
+      {
+        "for": "hana",
+        "src": "db",
+        "options": {
+          "model": [
+            "db",
+            "srv"
+          ]
+        }
+      },
+      {
+        "for": "nodejs",
+        "src": "srv",
+        "options": {
+          "model": [
+            "db",
+            "srv"
+          ]
+        }
+      }
+    ]
+  },
+  "hana": {
+    "deploy-format": "hdbtable"
+  }
+}

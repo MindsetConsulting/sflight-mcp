@@ -1,0 +1,10 @@
+{
+    "name": "sflights-mcp-db",
+    "dependencies": {
+        "@sap/hdi-deploy": "^5",
+        "hdb": "^2"
+    },
+    "scripts": {
+        "start": "node node_modules/@sap/hdi-deploy/deploy.js"
+    }
+}

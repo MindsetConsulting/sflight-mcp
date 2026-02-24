@@ -1,0 +1,68 @@
+_schema-version: "3.3"
+ID: sflights-mcp
+version: 1.0.0
+description: SAP Flight Model — BTP CAP CDS Project
+
+parameters:
+  enable-parallel-deployments: true
+
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm ci
+        - npx cds build --production
+
+modules:
+  - name: sflights-mcp-srv
+    type: nodejs
+    path: gen/srv
+    parameters:
+      buildpack: nodejs_buildpack
+      memory: 256M
+    provides:
+      - name: srv-api
+        properties:
+          srv-url: ${default-url}
+    requires:
+      - name: sflights-mcp-db
+      - name: sflights-mcp-auth
+
+  - name: sflights-mcp-db-deployer
+    type: hdb
+    path: gen/db
+    parameters:
+      buildpack: nodejs_buildpack
+      memory: 256M
+    requires:
+      - name: sflights-mcp-db
+
+  - name: sflights-mcp-approuter
+    type: approuter.nodejs
+    path: app/router
+    parameters:
+      memory: 128M
+    requires:
+      - name: srv-api
+        group: destinations
+        properties:
+          name: srv-api
+          url: ~{srv-url}
+          forwardAuthToken: true
+      - name: sflights-mcp-auth
+
+resources:
+  - name: sflights-mcp-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared
+    properties:
+      hdi-service-name: ${service-name}
+
+  - name: sflights-mcp-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json

@@ -1,0 +1,50 @@
+{
+  "name": "sflights-mcp",
+  "version": "1.0.0",
+  "description": "SAP Flight Model — BTP CAP CDS Project",
+  "repository": "https://github.com/AKS91/sflights-mcp",
+  "license": "MIT",
+  "dependencies": {
+    "@sap/cds": "^9",
+    "@cap-js/hana": "^2",
+    "@sap/xssec": "^4",
+    "@gavdi/cap-mcp": "^1",
+    "express": "^4"
+  },
+  "devDependencies": {
+    "@cap-js/sqlite": "^2",
+    "@sap/cds-dk": "^9",
+    "hana-cli": "3"
+  },
+  "scripts": {
+    "start": "cds-serve",
+    "watch": "cds watch"
+  },
+  "cds": {
+    "mcp": {
+      "name": "sflights-mcp",
+      "auth": "inherit"
+    },
+    "requires": {
+      "db": {
+        "kind": "sql"
+      },
+      "[production]": {
+        "db": {
+          "kind": "hana-cloud"
+        },
+        "auth": {
+          "kind": "xsuaa"
+        }
+      },
+      "[hybrid]": {
+        "db": {
+          "kind": "hana-cloud"
+        },
+        "auth": {
+          "kind": "dummy"
+        }
+      }
+    }
+  }
+}
