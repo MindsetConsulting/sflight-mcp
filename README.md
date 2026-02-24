@@ -222,9 +222,13 @@ The MCP server provides 19 tools, all prefixed with `cap_`:
 | Local development (no database) | Built-in cap-tools (19 tools) | SQLite + CSV seed data, zero setup |
 | Local with HANA Cloud | cap-tools + hana-cli | Both configured in `.mcp.json` |
 | Deployed on BTP (API consumers) | OData V4 endpoint | Standard REST/OData at `/odata/v4/flights` |
-| Business users (Excel) — local | supergateway + cap-tools | Wraps stdio→HTTP/SSE, see `scripts/start-mcp-sse.sh` |
-| Business users (Excel) — production | gavdi/cap-mcp plugin | HTTP/SSE inside CAP server at `/mcp` |
+| **Excel — local, macOS/Linux (Path A)** | supergateway + cap-tools | `bash scripts/start-mcp-sse.sh` → `localhost:8080` |
+| **Excel — local, Windows (Path A)** | supergateway + cap-tools | `scripts\start-mcp-sse.ps1` → `localhost:8080` |
+| **Excel — BTP deployed (Path B)** | gavdi/cap-mcp plugin | HTTP/SSE at `/mcp`, no admin needed (see note below) |
 | Quick PoC, no code changes | odata_mcp_go | Auto-discovers from `$metadata`, single binary |
+
+> **No org admin? No problem.** Register the MCP URL as a *personal connector* in your own `claude.ai` Settings → Integrations. No organization admin needed for personal testing.
+> See the full guide: [Testing Without an Org Admin](docs/claude-for-excel.md#testing-without-an-org-admin--two-paths).
 
 > For detailed setup instructions, see [External Integration Paths](docs/integration-paths.md) and [Claude for Excel Integration](docs/claude-for-excel.md).
 
@@ -354,7 +358,7 @@ sequenceDiagram
 
 | Guide | Description |
 |-------|------------|
-| [Claude for Excel](docs/claude-for-excel.md) | Connect flight data tools to Claude's Excel add-in — business users query data in plain English from spreadsheets |
+| [Claude for Excel](docs/claude-for-excel.md) | Connect flight data tools to Claude's Excel add-in. Covers **Path A** (local, Windows + macOS, no admin) and **Path B** (BTP deployed, no admin). Includes architecture diagrams, per-platform scripts, and how to promote to full team access. |
 | [External Integration Paths](docs/integration-paths.md) | Three ways to connect external MCP servers: gavdi/cap-mcp (merged plugin), CData OData (standalone Java), odata_mcp_go (standalone Go) — architecture comparison and step-by-step setup |
 
 ---
@@ -611,7 +615,8 @@ sflights-mcp/
   scripts/
     setup.sh                # One-shot setup (macOS/Linux/WSL2)
     setup.ps1               # One-shot setup (Windows PowerShell)
-    start-mcp-sse.sh        # Launch MCP server as HTTP/SSE for Claude for Excel
+    start-mcp-sse.sh        # Launch MCP server as HTTP/SSE — macOS/Linux/WSL2 (Path A)
+    start-mcp-sse.ps1       # Launch MCP server as HTTP/SSE — Windows PowerShell (Path A)
   test/
     mcp-test.sh             # MCP Inspector CLI tests for all 19 tools
     mcp-test-questions.sh   # 10 example SQL queries via MCP

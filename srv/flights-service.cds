@@ -1,5 +1,8 @@
 using flights from '../db/schema';
 
+// @open: temporarily allows unauthenticated access (no BTP role assignment needed).
+// Remove this annotation when admin can assign sflights-mcp-viewer to users.
+@open
 service FlightsService @(path: '/odata/v4/flights') {
 
         // ─── Airlines & Fleet ────────────────────────────────
