@@ -1,0 +1,400 @@
+### ─────────────────────────────────────────────────────────────
+### OData V4 Query Test Suite — sflights-mcp
+### ─────────────────────────────────────────────────────────────
+###
+### Prerequisites:
+###   cd sflights-mcp && cds watch
+###   Server runs at http://localhost:4004
+###
+### Use with:
+###   - VS Code REST Client extension (humao.rest-client)
+###   - IntelliJ HTTP Client
+###   - Any tool that supports .http files
+###
+### ─────────────────────────────────────────────────────────────
+
+@baseUrl = http://localhost:4004/odata/v4/flights
+
+
+### ═══════════════════════════════════════════════════════════════
+### SECTION 1: METADATA & SERVICE DOCUMENT
+### ═══════════════════════════════════════════════════════════════
+
+### 1.1 Service document — lists all entity sets
+GET {{baseUrl}}
+
+### 1.2 Full OData metadata — entity types, navigation properties, functions
+GET {{baseUrl}}/$metadata
+
+
+### ═══════════════════════════════════════════════════════════════
+### SECTION 2: SIMPLE QUERIES (Single Entity)
+### ═══════════════════════════════════════════════════════════════
+
+### 2.1 All carriers (airlines)
+GET {{baseUrl}}/Carriers
+
+### 2.2 First 5 flights
+GET {{baseUrl}}/Flights?$top=5
+
+### 2.3 Count of all flights
+GET {{baseUrl}}/Flights/$count
+
+### 2.4 Count of all bookings
+GET {{baseUrl}}/Bookings/$count
+
+### 2.5 All airports
+GET {{baseUrl}}/Airports
+
+### 2.6 All travel agencies
+GET {{baseUrl}}/TravelAgencies
+
+### 2.7 All plane types
+GET {{baseUrl}}/Planes
+
+### 2.8 Currency exchange rates
+GET {{baseUrl}}/CurrencyRates?$top=10
+
+### 2.9 Geographic cities
+GET {{baseUrl}}/GeoCities?$top=10
+
+### 2.10 All connections (routes)
+GET {{baseUrl}}/Connections?$top=10
+
+
+### ═══════════════════════════════════════════════════════════════
+### SECTION 3: FILTERING ($filter)
+### ═══════════════════════════════════════════════════════════════
+
+### 3.1 Flights by a specific airline (Lufthansa = LH)
+GET {{baseUrl}}/Flights?$filter=CARRID eq 'LH'&$top=10
+
+### 3.2 Connections to New York
+GET {{baseUrl}}/Connections?$filter=CITYTO eq 'NEW YORK'
+
+### 3.3 Connections from Frankfurt
+GET {{baseUrl}}/Connections?$filter=CITYFROM eq 'FRANKFURT'
+
+### 3.4 Flights on a specific date
+GET {{baseUrl}}/Flights?$filter=FLDATE eq 2025-03-15
+
+### 3.5 Flights with high occupancy (more than 300 seats occupied)
+GET {{baseUrl}}/Flights?$filter=SEATSOCC gt 300&$top=10
+
+### 3.6 Long-distance routes (distance > 5000 km)
+GET {{baseUrl}}/Connections?$filter=DISTANCE gt 5000
+
+### 3.7 Business customers only
+GET {{baseUrl}}/Customers?$filter=CUSTTYPE eq 'B'&$top=10
+
+### 3.8 Flights priced above 1000
+GET {{baseUrl}}/Flights?$filter=PRICE gt 1000&$top=10
+
+### 3.9 Connections between specific city pair
+GET {{baseUrl}}/Connections?$filter=CITYFROM eq 'FRANKFURT' and CITYTO eq 'NEW YORK'
+
+### 3.10 Airports in a specific country
+GET {{baseUrl}}/Airports?$filter=COUNTRY eq 'DE'
+
+### 3.11 Compound filter — airline AND destination
+GET {{baseUrl}}/Connections?$filter=CARRID eq 'LH' and COUNTRYTO eq 'US'
+
+### 3.12 Flights in a date range
+GET {{baseUrl}}/Flights?$filter=FLDATE ge 2025-01-01 and FLDATE le 2025-12-31&$top=20
+
+### 3.13 Customers from a specific country
+GET {{baseUrl}}/Customers?$filter=COUNTRY eq 'DE'&$top=10
+
+### 3.14 Bookings for a specific flight
+GET {{baseUrl}}/Bookings?$filter=CARRID eq 'LH' and CONNID eq '0400'&$top=10
+
+
+### ═══════════════════════════════════════════════════════════════
+### SECTION 4: PROJECTION ($select)
+### ═══════════════════════════════════════════════════════════════
+
+### 4.1 Only airline code and name
+GET {{baseUrl}}/Carriers?$select=CARRID,CARRNAME
+
+### 4.2 Flight essentials — airline, route, date, price
+GET {{baseUrl}}/Flights?$select=CARRID,CONNID,FLDATE,PRICE,CURRENCY&$top=10
+
+### 4.3 Connection route info only
+GET {{baseUrl}}/Connections?$select=CARRID,CONNID,CITYFROM,CITYTO,DISTANCE&$top=10
+
+### 4.4 Customer names and cities
+GET {{baseUrl}}/Customers?$select=NAME,CITY,COUNTRY&$top=10
+
+### 4.5 Booking IDs with dates
+GET {{baseUrl}}/Bookings?$select=BOOKID,CARRID,CONNID,FLDATE,ORDER_DATE&$top=10
+
+
+### ═══════════════════════════════════════════════════════════════
+### SECTION 5: SORTING ($orderby)
+### ═══════════════════════════════════════════════════════════════
+
+### 5.1 Most expensive flights first
+GET {{baseUrl}}/Flights?$orderby=PRICE desc&$top=10
+
+### 5.2 Longest routes first
+GET {{baseUrl}}/Connections?$orderby=DISTANCE desc&$top=10
+
+### 5.3 Most recent bookings
+GET {{baseUrl}}/Bookings?$orderby=ORDER_DATE desc&$top=10
+
+### 5.4 Alphabetical airlines
+GET {{baseUrl}}/Carriers?$orderby=CARRNAME asc
+
+### 5.5 Earliest departure times
+GET {{baseUrl}}/Connections?$orderby=DEPTIME asc&$top=10
+
+
+### ═══════════════════════════════════════════════════════════════
+### SECTION 6: PAGINATION ($skip + $top)
+### ═══════════════════════════════════════════════════════════════
+
+### 6.1 Page 1 of flights (rows 1-20)
+GET {{baseUrl}}/Flights?$top=20&$skip=0
+
+### 6.2 Page 2 of flights (rows 21-40)
+GET {{baseUrl}}/Flights?$top=20&$skip=20
+
+### 6.3 Page 3 of flights (rows 41-60)
+GET {{baseUrl}}/Flights?$top=20&$skip=40
+
+
+### ═══════════════════════════════════════════════════════════════
+### SECTION 7: ASSOCIATIONS ($expand — Single Level)
+### ═══════════════════════════════════════════════════════════════
+###
+### Associations represent navigational relationships between entities.
+### $expand follows these links and returns related data inline.
+###
+
+### 7.1 Carrier → CONNECTIONS (association to-many)
+### "Show me Lufthansa with all its routes"
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'LH'&$expand=CONNECTIONS
+
+### 7.2 Carrier → FLIGHTS (association to-many)
+### "Show me all Singapore Airlines flights"
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'SQ'&$expand=FLIGHTS($top=10)
+
+### 7.3 Carrier → MEALS (association to-many)
+### "What meals does Lufthansa offer?"
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'LH'&$expand=MEALS
+
+### 7.4 Carrier → MENUS (association to-many)
+### "Show me the menus for American Airlines"
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'AA'&$expand=MENUS
+
+### 7.5 Connection → CARRIER (association to-one)
+### "Show connection details with the airline name"
+GET {{baseUrl}}/Connections?$top=5&$expand=CARRIER
+
+### 7.6 Connection → FLIGHTS (association to-many)
+### "Show all flights on connection LH 0400"
+GET {{baseUrl}}/Connections?$filter=CARRID eq 'LH' and CONNID eq '0400'&$expand=FLIGHTS($top=10)
+
+### 7.7 Flight → CONNECTION (association to-one)
+### "Show flights with their route details"
+GET {{baseUrl}}/Flights?$top=5&$expand=CONNECTION
+
+### 7.8 Flight → CARRIER (association to-one)
+### "Show flights with airline name"
+GET {{baseUrl}}/Flights?$top=5&$expand=CARRIER
+
+### 7.9 Flight → BOOKINGS (association to-many)
+### "Show bookings for a specific flight"
+GET {{baseUrl}}/Flights?$filter=CARRID eq 'LH' and CONNID eq '0400' and FLDATE eq 2025-03-15&$expand=BOOKINGS
+
+### 7.10 Booking → CUSTOMER (association to-one)
+### "Show bookings with customer details"
+GET {{baseUrl}}/Bookings?$top=5&$expand=CUSTOMER
+
+### 7.11 Booking → FLIGHT (association to-one)
+### "Show bookings with flight info"
+GET {{baseUrl}}/Bookings?$top=5&$expand=FLIGHT
+
+### 7.12 Booking → INVOICE (association to-one)
+### "Show bookings with invoice data"
+GET {{baseUrl}}/Bookings?$top=5&$expand=INVOICE
+
+### 7.13 Customer → BOOKINGS (association to-many)
+### "Show a customer's booking history"
+GET {{baseUrl}}/Customers?$top=3&$expand=BOOKINGS($top=5)
+
+### 7.14 Customer → PARTNER (association to-one)
+### "Show customers with business partner details"
+GET {{baseUrl}}/Customers?$top=5&$expand=PARTNER
+
+
+### ═══════════════════════════════════════════════════════════════
+### SECTION 8: COMPOSITIONS ($expand — Owned Children)
+### ═══════════════════════════════════════════════════════════════
+###
+### Compositions represent parent-child ownership. The child cannot
+### exist without the parent. Deleting the parent cascades to children.
+###
+
+### 8.1 Carrier → FLEET (composition of many CarrierPlanes)
+### "Show me Lufthansa's entire fleet"
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'LH'&$expand=FLEET
+
+### 8.2 Carrier → COUNTERS (composition of many Counters)
+### "Show me all check-in counters for an airline"
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'LH'&$expand=COUNTERS
+
+### 8.3 Fleet details with plane specifications
+### "Show carrier fleet with plane type details"
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'SQ'&$expand=FLEET($expand=PLANE)
+
+### 8.4 All compositions for a carrier at once
+### "Show me everything owned by Lufthansa"
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'LH'&$expand=FLEET,COUNTERS
+
+
+### ═══════════════════════════════════════════════════════════════
+### SECTION 9: NESTED $expand (Multi-Level Navigation)
+### ═══════════════════════════════════════════════════════════════
+###
+### Follow association chains: Carrier → Connections → Flights
+### This tests deep navigation through the data model.
+###
+
+### 9.1 Carrier → Connections → Flights (3 levels)
+### "Show me an airline's routes AND the flights on each route"
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'LH'&$expand=CONNECTIONS($expand=FLIGHTS($top=3))
+
+### 9.2 Carrier → Flights → Bookings (3 levels)
+### "Show me an airline's flights AND who booked each flight"
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'AA'&$expand=FLIGHTS($top=3;$expand=BOOKINGS($top=5))
+
+### 9.3 Carrier → Connections → Flights → Bookings (4 levels)
+### "Full drill-down: airline → routes → flights → bookings"
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'LH'&$expand=CONNECTIONS($top=2;$expand=FLIGHTS($top=2;$expand=BOOKINGS($top=3)))
+
+### 9.4 Booking → Customer + Flight → Connection (multi-path)
+### "Show booking with customer name AND the full flight/route details"
+GET {{baseUrl}}/Bookings?$top=5&$expand=CUSTOMER,FLIGHT($expand=CONNECTION)
+
+### 9.5 Flight → Connection + Carrier + Bookings → Customer (fan-out)
+### "Show flight with route info, airline name, and passenger names"
+GET {{baseUrl}}/Flights?$top=3&$expand=CONNECTION,CARRIER,BOOKINGS($top=3;$expand=CUSTOMER)
+
+### 9.6 Connection → Carrier + Flights → Bookings (sibling + nested)
+### "Show route with airline name, and each flight's booking count"
+GET {{baseUrl}}/Connections?$top=3&$expand=CARRIER,FLIGHTS($top=2;$expand=BOOKINGS($top=3))
+
+### 9.7 Carrier → Fleet → Plane + Connections (composition + association side by side)
+### "Show airline's owned fleet details alongside their routes"
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'LH'&$expand=FLEET($expand=PLANE),CONNECTIONS($top=5)
+
+### 9.8 Carrier with everything — fleet, counters, connections, flights, meals, menus
+### "The ultimate carrier profile"
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'SQ'&$expand=FLEET,COUNTERS,CONNECTIONS($top=5),FLIGHTS($top=5),MEALS,MENUS
+
+
+### ═══════════════════════════════════════════════════════════════
+### SECTION 10: VIEWS (Pre-Joined Read-Only Entities)
+### ═══════════════════════════════════════════════════════════════
+
+### 10.1 CustomerBusinessPartners — customers joined with partner details
+GET {{baseUrl}}/CustomerBusinessPartners?$top=10
+
+### 10.2 CarrierConnections — carriers with connection and flight schedule
+GET {{baseUrl}}/CarrierConnections?$top=10
+
+### 10.3 FlightSchedule — denormalized flights with route and carrier info
+GET {{baseUrl}}/FlightSchedule?$top=10
+
+### 10.4 BookingDetails — bookings with flight, connection, and customer data
+GET {{baseUrl}}/BookingDetails?$top=10
+
+### 10.5 Filter a view — flight schedule for a specific airline
+GET {{baseUrl}}/FlightSchedule?$filter=CARRID eq 'LH'&$top=10
+
+### 10.6 Filter a view — booking details for business customers
+GET {{baseUrl}}/BookingDetails?$filter=CUSTTYPE eq 'B'&$top=10
+
+
+### ═══════════════════════════════════════════════════════════════
+### SECTION 11: FUNCTIONS (Custom Logic)
+### ═══════════════════════════════════════════════════════════════
+
+### 11.1 Get flights on a specific date (custom CDS function)
+GET {{baseUrl}}/getFlightsOnDate(flightDate=2025-03-15)
+
+### 11.2 Get flights on another date
+GET {{baseUrl}}/getFlightsOnDate(flightDate=2028-06-20)
+
+### 11.3 Get flights on a date with no flights (should return empty)
+GET {{baseUrl}}/getFlightsOnDate(flightDate=2020-01-01)
+
+
+### ═══════════════════════════════════════════════════════════════
+### SECTION 12: COMBINED QUERIES (Filter + Expand + Select + Sort)
+### ═══════════════════════════════════════════════════════════════
+
+### 12.1 Filtered expand — Carrier's connections to US only
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'LH'&$expand=CONNECTIONS($filter=COUNTRYTO eq 'US')
+
+### 12.2 Select within expand — only get city pairs from connections
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'SQ'&$expand=CONNECTIONS($select=CITYFROM,CITYTO,DISTANCE)
+
+### 12.3 Sorted expand — carrier's flights ordered by price (most expensive first)
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'LH'&$expand=FLIGHTS($orderby=PRICE desc;$top=10)
+
+### 12.4 Multiple expands with individual filters
+GET {{baseUrl}}/Carriers?$filter=CARRID eq 'AA'&$expand=CONNECTIONS($filter=DISTANCE gt 5000),FLIGHTS($filter=SEATSOCC gt 200;$top=5)
+
+### 12.5 Booking deep query — booking + customer name + flight with route
+GET {{baseUrl}}/Bookings?$filter=CARRID eq 'LH'&$top=5&$select=BOOKID,ORDER_DATE&$expand=CUSTOMER($select=NAME,CITY),FLIGHT($select=FLDATE,PRICE;$expand=CONNECTION($select=CITYFROM,CITYTO))
+
+### 12.6 Connection with carrier name and flight count limited
+GET {{baseUrl}}/Connections?$filter=CITYTO eq 'NEW YORK'&$select=CARRID,CONNID,CITYFROM,DISTANCE&$expand=CARRIER($select=CARRNAME),FLIGHTS($top=3;$select=FLDATE,SEATSOCC)&$orderby=DISTANCE desc
+
+
+### ═══════════════════════════════════════════════════════════════
+### SECTION 13: IN-FLIGHT MEALS (Deep Composition Tree)
+### ═══════════════════════════════════════════════════════════════
+
+### 13.1 All meal definitions
+GET {{baseUrl}}/Meals?$top=10
+
+### 13.2 Meal texts (multilingual)
+GET {{baseUrl}}/MealTexts?$top=10
+
+### 13.3 Flight meals — which meals are served on which flights
+GET {{baseUrl}}/FlightMeals?$top=10
+
+### 13.4 Menu with meal categories
+GET {{baseUrl}}/Menus?$top=10
+
+### 13.5 Starters
+GET {{baseUrl}}/Starters?$top=10
+
+### 13.6 Main courses
+GET {{baseUrl}}/MainCourses?$top=10
+
+### 13.7 Desserts
+GET {{baseUrl}}/Desserts?$top=10
+
+
+### ═══════════════════════════════════════════════════════════════
+### SECTION 14: EDGE CASES & ERROR HANDLING
+### ═══════════════════════════════════════════════════════════════
+
+### 14.1 Non-existent entity (should return 404)
+GET {{baseUrl}}/NonExistentEntity
+
+### 14.2 Invalid filter syntax (should return 400)
+GET {{baseUrl}}/Flights?$filter=INVALID
+
+### 14.3 Expand on non-existent navigation property
+GET {{baseUrl}}/Carriers?$expand=NONEXISTENT
+
+### 14.4 Very large top (server may cap it)
+GET {{baseUrl}}/Flights?$top=10000
+
+### 14.5 Empty result set
+GET {{baseUrl}}/Flights?$filter=CARRID eq 'ZZZZZ'
