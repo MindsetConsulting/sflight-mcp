@@ -6,13 +6,15 @@
       "source": "^/mcp(.*)$",
       "target": "/mcp$1",
       "destination": "srv-api",
+      "csrfProtection": false,
       "authenticationType": "none"
     },
     {
       "source": "^/odata/v4/flights/(.*)$",
       "target": "/odata/v4/flights/$1",
       "destination": "srv-api",
-      "authenticationType": "xsuaa"
+      "csrfProtection": false,
+      "authenticationType": "none"
     }
   ]
 }

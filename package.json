@@ -25,12 +25,15 @@
     "start": "cds-serve",
     "watch": "cds watch",
     "build": "cds build && cds build --production",
-    "test": "cds test"
+    "test": "cds test",
+    "postinstall": "node scripts/patch-mcp-resources.js || true"
   },
   "cds": {
     "mcp": {
       "name": "sflights-mcp",
-      "auth": "inherit"
+      "auth": "none",
+      "wrap_entities_to_actions": true,
+      "wrap_entity_modes": ["query", "get"]
     },
     "requires": {
       "db": {
@@ -41,7 +44,7 @@
           "kind": "hana-cloud"
         },
         "auth": {
-          "kind": "xsuaa"
+          "kind": "dummy"
         }
       },
       "[hybrid]": {

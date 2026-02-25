@@ -209,5 +209,41 @@ service FlightsService @(path: '/odata/v4/flights') {
         entity BookingDetails           as projection on flights.BookingDetails;
 
         // ─── Functions ───────────────────────────────────────
+        @mcp: {
+                name       : 'get-flights-on-date',
+                description: 'Get all flight connections operating on a specific date',
+                tool       : true
+        }
         function getFlightsOnDate(flightDate: Date) returns array of CarrierConnections;
 }
+
+// ─── MCP Prompts ────────────────────────────────────────────
+annotate FlightsService with @mcp.prompts: [
+        {
+                name       : 'airline-overview',
+                title      : 'Airline Overview',
+                description: 'Get a comprehensive overview of a specific airline including routes, fleet, and seat occupancy',
+                template   : 'Give me a comprehensive overview of the airline with carrier ID {{carrier_id}}. Include its routes, fleet composition, number of flights, and average seat occupancy.',
+                role       : 'user',
+                inputs     : [{ key: 'carrier_id', type: 'String' }]
+        },
+        {
+                name       : 'route-finder',
+                title      : 'Route Finder',
+                description: 'Find available flight routes between two cities',
+                template   : 'Find all available flight routes from {{city_from}} to {{city_to}}. Show the airlines operating each route, flight frequency, typical pricing, and seat availability.',
+                role       : 'user',
+                inputs     : [
+                        { key: 'city_from', type: 'String' },
+                        { key: 'city_to',   type: 'String' }
+                ]
+        },
+        {
+                name       : 'booking-analysis',
+                title      : 'Booking Analysis',
+                description: 'Analyze booking patterns and trends for a given airline or route',
+                template   : 'Analyze the booking patterns for {{subject}}. Show booking volumes, class distribution (economy, business, first), popular routes, and customer demographics.',
+                role       : 'user',
+                inputs     : [{ key: 'subject', type: 'String' }]
+        }
+];
