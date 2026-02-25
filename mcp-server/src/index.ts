@@ -35,12 +35,28 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  ListResourcesRequestSchema,
+  ListResourceTemplatesRequestSchema,
+  ReadResourceRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { ALL_TOOLS, type ToolDefinition } from './cap-tools.js';
+import {
+  ALL_RESOURCES,
+  ALL_RESOURCE_TEMPLATES,
+  matchTemplate,
+  type ResourceDefinition,
+  type ResourceTemplateDefinition,
+} from './cap-resources.js';
+import { ALL_PROMPTS, type PromptDefinition } from './cap-prompts.js';
 
 class CapMcpServer {
   private server: Server;
   private tools: Map<string, ToolDefinition> = new Map();
+  private resources: Map<string, ResourceDefinition> = new Map();
+  private resourceTemplates: ResourceTemplateDefinition[] = [];
+  private prompts: Map<string, PromptDefinition> = new Map();
   private projectRoot: string;
 
   constructor() {
@@ -57,11 +73,15 @@ class CapMcpServer {
       {
         capabilities: {
           tools: {},
+          resources: {},
+          prompts: {},
         },
       }
     );
 
     this.registerTools();
+    this.registerResources();
+    this.registerPrompts();
     this.setupHandlers();
     this.setupErrorHandling();
   }
@@ -84,6 +104,21 @@ class CapMcpServer {
     console.error(`[CAP MCP] Registered ${this.tools.size} tools`);
   }
 
+  private registerResources(): void {
+    for (const resource of ALL_RESOURCES) {
+      this.resources.set(resource.uri, resource);
+    }
+    this.resourceTemplates = [...ALL_RESOURCE_TEMPLATES];
+    console.error(`[CAP MCP] Registered ${this.resources.size} resources, ${this.resourceTemplates.length} resource templates`);
+  }
+
+  private registerPrompts(): void {
+    for (const prompt of ALL_PROMPTS) {
+      this.prompts.set(prompt.name, prompt);
+    }
+    console.error(`[CAP MCP] Registered ${this.prompts.size} prompts`);
+  }
+
   private setupHandlers(): void {
     // List available tools
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -98,6 +133,129 @@ class CapMcpServer {
       }
 
       return { tools };
+    });
+
+    // List available resources
+    this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
+      return {
+        resources: Array.from(this.resources.values()).map((r) => ({
+          uri: r.uri,
+          name: r.name,
+          description: r.description,
+          mimeType: r.mimeType,
+        })),
+      };
+    });
+
+    // List resource templates
+    this.server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => {
+      return {
+        resourceTemplates: this.resourceTemplates.map((t) => ({
+          uriTemplate: t.uriTemplate,
+          name: t.name,
+          description: t.description,
+          mimeType: t.mimeType,
+        })),
+      };
+    });
+
+    // Read a resource by URI
+    this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+      const { uri } = request.params;
+
+      // Try static resources first
+      const staticResource = this.resources.get(uri);
+      if (staticResource) {
+        try {
+          const content = await staticResource.handler(this.projectRoot);
+          return {
+            contents: [
+              {
+                uri,
+                mimeType: staticResource.mimeType,
+                text: content,
+              },
+            ],
+          };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          return {
+            contents: [
+              {
+                uri,
+                mimeType: 'text/plain',
+                text: `Error reading resource: ${message}`,
+              },
+            ],
+          };
+        }
+      }
+
+      // Try resource templates
+      for (const template of this.resourceTemplates) {
+        const params = matchTemplate(uri, template.uriTemplate);
+        if (params) {
+          try {
+            const content = await template.handler(params, this.projectRoot);
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: template.mimeType,
+                  text: content,
+                },
+              ],
+            };
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: 'text/plain',
+                  text: `Error reading resource: ${message}`,
+                },
+              ],
+            };
+          }
+        }
+      }
+
+      throw new Error(`Resource not found: ${uri}`);
+    });
+
+    // List available prompts
+    this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
+      return {
+        prompts: Array.from(this.prompts.values()).map((p) => ({
+          name: p.name,
+          description: p.description,
+          arguments: p.arguments?.map((a) => ({
+            name: a.name,
+            description: a.description,
+            required: a.required,
+          })),
+        })),
+      };
+    });
+
+    // Get a specific prompt (expand it into messages)
+    this.server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      const prompt = this.prompts.get(name);
+      if (!prompt) {
+        throw new Error(
+          `Prompt not found: ${name}. Available: ${Array.from(this.prompts.keys()).join(', ')}`
+        );
+      }
+
+      const messages = prompt.handler(args || {});
+
+      return {
+        description: prompt.description,
+        messages,
+      };
     });
 
     // Execute tool calls
@@ -151,6 +309,9 @@ class CapMcpServer {
     console.error(`[CAP MCP] Server running on stdio`);
     console.error(`[CAP MCP] Project root: ${this.projectRoot}`);
     console.error(`[CAP MCP] Tools: ${Array.from(this.tools.keys()).join(', ')}`);
+    console.error(`[CAP MCP] Resources: ${Array.from(this.resources.keys()).join(', ')}`);
+    console.error(`[CAP MCP] Resource Templates: ${this.resourceTemplates.map((t) => t.uriTemplate).join(', ')}`);
+    console.error(`[CAP MCP] Prompts: ${Array.from(this.prompts.keys()).join(', ')}`);
   }
 }
 

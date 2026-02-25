@@ -217,7 +217,7 @@ dist
 db/@cds-models
 *.sql
 #tools/annotation-validation
-#.mcp.json
+.mcp.json
 #mcp-*
 *.txt
 *.text
