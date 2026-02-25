@@ -12,8 +12,6 @@ build-parameters:
       commands:
         - npm ci
         - npx cds build --production
-        - mkdir -p gen/srv/scripts
-        - cp scripts/patch-mcp-resources.js gen/srv/scripts/
 
 modules:
   - name: sflights-mcp-srv

@@ -8,7 +8,7 @@
     "@sap/cds": "^9",
     "@cap-js/hana": "^2",
     "@sap/xssec": "^4",
-    "@gavdi/cap-mcp": "^1",
+    "@gavdi/cap-mcp": "github:MindsetConsulting/cap-mcp-plugin#fix/resource-list-callback",
     "express": "^4",
     "hana-cli": "^3",
     "@modelcontextprotocol/sdk": "^1"
@@ -26,7 +26,7 @@
     "watch": "cds watch",
     "build": "cds build && cds build --production",
     "test": "cds test",
-    "postinstall": "node scripts/patch-mcp-resources.js || true"
+    "postinstall": "echo '@gavdi/cap-mcp using Mindset fork — no patch needed'"
   },
   "cds": {
     "mcp": {
