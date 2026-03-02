@@ -1,0 +1,112 @@
+### ─────────────────────────────────────────────────────────────
+### MCP Server — AI Questions for Claude Code
+### ─────────────────────────────────────────────────────────────
+###
+### These questions are designed to test the CAP MCP server's ability
+### to answer real-world data questions through Claude Code.
+###
+### HOW TO USE:
+###   1. Open a terminal in sflights-mcp/
+###   2. Run: claude
+###   3. Copy-paste any question below and hit Enter
+###   4. Claude will use cap_ tools to answer with real data
+###
+### Questions are ordered by difficulty:
+###   Q1–Q5   : Simple (single entity, direct lookup)
+###   Q6–Q10  : Medium (joins, aggregations, grouping)
+###   Q11–Q15 : Hard (multi-step reasoning, derived metrics)
+###   Q16–Q20 : Expert (cross-entity analysis, business insights)
+###
+### ─────────────────────────────────────────────────────────────
+
+
+### ─── SIMPLE: Single Entity Queries ────────────────────────────
+
+### Q1: Direct lookup — but needs understanding of column names
+# Ask Claude:
+# "List all airlines and their home currency"
+
+### Q2: Filtering — needs to know city columns live in Connections, not Carriers
+# Ask Claude:
+# "Which airports are located in Germany?"
+
+### Q3: Counting — simple aggregation but needs correct table
+# Ask Claude:
+# "How many different plane types exist in the fleet?"
+
+### Q4: Date awareness — needs to understand FLDATE format
+# Ask Claude:
+# "Show me all flights scheduled for March 2025"
+
+### Q5: Text search — partial match across name fields
+# Ask Claude:
+# "Find all customers whose name contains 'Schmidt'"
+
+
+### ─── MEDIUM: Joins and Aggregations ───────────────────────────
+
+### Q6: Two-table join — must connect Flights to Carriers via CARRID
+# Ask Claude:
+# "What is the total number of occupied seats per airline? Show airline names, not codes."
+
+### Q7: Aggregation with filter — needs JOIN + WHERE + GROUP BY
+# Ask Claude:
+# "How many flights does each airline operate to cities in the United States?"
+
+### Q8: Derived calculation — needs SEATSMAX - SEATSOCC to compute empty seats
+# Ask Claude:
+# "Which flights have more than 50% of their seats still available?"
+
+### Q9: Multi-table — needs Connections for route + Flights for schedule
+# Ask Claude:
+# "What are the top 5 longest routes by distance, and how many flights operate on each?"
+
+### Q10: Time-based grouping — needs to extract year from FLDATE
+# Ask Claude:
+# "Show me the number of flights per year, grouped by year"
+
+
+### ─── HARD: Multi-Step Reasoning ───────────────────────────────
+
+### Q11: Occupancy rate — needs (SEATSOCC / SEATSMAX * 100), then average per airline
+# Ask Claude:
+# "What is the average seat occupancy rate for each airline? Which airline fills its planes the best?"
+
+### Q12: Revenue estimation — needs PRICE * SEATSOCC across flights, joined with Carriers
+# Ask Claude:
+# "Estimate the total revenue per airline based on ticket price times occupied seats. Which airline earns the most?"
+
+### Q13: Route popularity — needs Bookings COUNT joined through Connections to get city pairs
+# Ask Claude:
+# "Which city-to-city routes have the most bookings? Show the top 10 with booking counts."
+
+### Q14: Customer segmentation — needs CUSTTYPE distribution + booking frequency
+# Ask Claude:
+# "Break down bookings by customer type. Do business customers book more frequently than private customers?"
+
+### Q15: Temporal trend — needs date extraction + aggregation over time periods
+# Ask Claude:
+# "Is the number of bookings trending up or down over the years? Show monthly booking counts for the last 2 years."
+
+
+### ─── EXPERT: Cross-Entity Business Insights ──────────────────
+
+### Q16: Fleet utilization — needs CarrierPlanes + Flights + Connections to see which plane types fly most
+# Ask Claude:
+# "Which plane types are used most frequently across all airlines? Are there any plane types in the fleet that have zero flights?"
+
+### Q17: Network analysis — needs Connections + Airports to map hub connectivity
+# Ask Claude:
+# "Which airports serve as major hubs — meaning they appear as departure or arrival in the most connections? Show top 5."
+
+### Q18: Meal coverage — needs FlightMeals + Flights to check which flights have meals assigned
+# Ask Claude:
+# "What percentage of flights have meal service assigned? Which airlines provide meal service on all their flights?"
+
+### Q19: Pricing intelligence — needs Flights PRICE + CURRENCY + CurrencyRates for normalization
+# Ask Claude:
+# "Compare average ticket prices across airlines. Are there airlines that price significantly above or below the average?"
+
+### Q20: Full business report — needs 4+ tables, multiple aggregations, and narrative
+# Ask Claude:
+# "Give me an executive summary of this airline dataset: total flights, total passengers, top 3 airlines by revenue, busiest route, average occupancy, and the fastest growing airline by year-over-year booking increase."

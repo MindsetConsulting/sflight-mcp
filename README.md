@@ -14,17 +14,51 @@ The classic SAP SFLIGHT data model — airlines, flights, bookings, passengers �
 | **59 Navigation Properties** | 5 compositions + 54 associations — fully navigable data model |
 | **24 CSV Seed Data Files** | ~5,000 flights, 10,000+ bookings, 24 airlines, 15 destination cities (2023-2028) — ready to query immediately |
 | **OData V4 Service** | REST API at `/odata/v4/flights` with full metadata, filtering, and expansion |
-| **17-Tool MCP Server** | AI assistant that understands your data model, runs SQL queries, inspects schemas, and answers questions in plain English |
+| **19-Tool MCP Server** | AI assistant that understands your data model, runs SQL queries, inspects schemas, and answers questions in plain English |
 | **BTP-Ready Deployment** | MTA descriptor with XSUAA security, HANA Cloud HDI, and managed approuter |
+
+---
+
+## Platform Support
+
+Works on **macOS**, **Linux**, and **Windows**. The OData server and MCP server build are fully cross-platform. Claude Code CLI requires macOS, Linux, or WSL2 on Windows.
+
+| Component | macOS | Linux | Windows | Windows (WSL2) |
+|-----------|:-----:|:-----:|:-------:|:--------------:|
+| CAP server / OData | Yes | Yes | Yes | Yes |
+| MCP server build | Yes | Yes | Yes | Yes |
+| Claude Code CLI | Yes | Yes | No | Yes |
+| Claude for Excel | Yes | N/A | Yes | N/A |
 
 ---
 
 ## Quick Start (2 Minutes)
 
+**macOS / Linux / WSL2:**
+
 ```bash
-git clone https://github.com/AKS91/sflights-mcp.git
-cd sflights-mcp
+git clone https://github.com/MindsetConsulting/sflight-mcp.git
+cd sflight-mcp
+bash scripts/setup.sh   # installs deps, builds MCP server, creates .mcp.json
+cds watch
+```
+
+**Windows (PowerShell):**
+
+```powershell
+git clone https://github.com/MindsetConsulting/sflight-mcp.git
+cd sflight-mcp
+powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
+cds watch
+```
+
+**Manual steps (any platform):**
+
+```bash
+git clone https://github.com/MindsetConsulting/sflight-mcp.git
+cd sflight-mcp
 npm install
+cd mcp-server && npm install && npm run build && cd ..
 cds watch
 ```
 
@@ -138,53 +172,33 @@ Not sure what to ask? Here are 10 real questions that the MCP server can answer,
 
 ---
 
-## MCP Server — 17 Tools
+## MCP Server — 2 Code Mode Tools
 
-The MCP server provides 17 tools, all prefixed with `cap_`:
+The MCP server provides 2 programmable Code Mode tools based on [Anthropic's Code Execution with MCP](https://www.anthropic.com/engineering/code-execution-with-mcp) pattern. Instead of 19 individual tools, the agent writes JavaScript that runs in secure VM sandboxes:
 
-### Model Introspection
-| Tool | What It Does |
-|------|-------------|
-| `cap_entities` | Lists all 26 entities + 4 views with key fields, associations, and compositions |
-| `cap_entity_detail` | Full definition of any entity — all fields, types, and relationships |
-| `cap_associations` | All 59 navigation properties with cardinality and target entities |
-| `cap_nav_map` | Complete navigation graph with SQL JOIN ON clauses — essential for multi-table queries |
-| `cap_services` | Service definitions with entity counts and function/action counts |
+| Tool | Purpose | Sandbox Globals |
+|------|---------|-----------------|
+| `cap_search` | Explore CDS data model by writing JavaScript against the compiled CSN | `model` (CSN), `tables` (string[]), `log()` |
+| `cap_execute` | Run SQL queries + JavaScript transforms against in-memory SQLite | `query(sql, maxRows?)`, `log()` |
 
-### Schema & Compilation
-| Tool | What It Does |
-|------|-------------|
-| `cap_compile` | Compiles CDS to json, edmx, sql, hdbcds, hdbtable, or yaml |
-| `cap_edm` | Generates OData V4 EDMX metadata document |
+**Workflow:** Always `cap_search` first (discover entities, fields, JOINs), then `cap_execute` (query + filter + transform). See `.claude/skills/cap-code-mode/SKILL.md` for recipes.
 
-### Data Queries (SQL)
-| Tool | What It Does |
-|------|-------------|
-| `cap_cql_query` | Runs any SQL query against in-memory SQLite with all seed data loaded |
-| `cap_data_stats` | Row counts for every entity — see data volume at a glance |
-| `cap_sample_data` | Preview rows from any entity — see actual values and column names |
-| `cap_db_schema` | Complete database schema with column names, types, and keys |
-
-### Project Management
-| Tool | What It Does |
-|------|-------------|
-| `cap_csv_inspect` | Browse CSV seed data files and preview contents |
-| `cap_project_info` | Package.json, CDS config, and all dependencies |
-| `cap_mta_info` | MTA deployment descriptor details |
-| `cap_build` | Run CDS build (development or production) |
-| `cap_hana_mapping` | CDS entity to HANA artifact name mapping |
-| `cap_query` | OData query against a running CAP service (requires `cds watch`) |
+**Security:** Agent-generated code runs in subprocess sandboxes (`vm.runInContext` with `Object.create(null)`). No `require`, `fs`, `process`, or network access. Write operations are blocked. Output capped at 50KB. Timeouts enforced at both VM and parent process levels.
 
 ### Which MCP Server Should I Use?
 
 | Scenario | MCP Server | Why |
 |----------|-----------|-----|
-| Local development (no database) | Built-in cap-tools (17 tools) | SQLite + CSV seed data, zero setup |
-| Local with HANA Cloud | cap-tools + hana-cli | Both configured in `.mcp.json` |
+| Local development (no database) | Built-in Code Mode tools (2 tools) | SQLite + CSV seed data, zero setup |
+| Local with HANA Cloud | Code Mode tools + hana-cli | Both configured in `.mcp.json` |
 | Deployed on BTP (API consumers) | OData V4 endpoint | Standard REST/OData at `/odata/v4/flights` |
-| Business users (Excel) — local | supergateway + cap-tools | Wraps stdio→HTTP/SSE, see `scripts/start-mcp-sse.sh` |
-| Business users (Excel) — production | gavdi/cap-mcp plugin | HTTP/SSE inside CAP server at `/mcp` |
+| **Excel — local, macOS/Linux (Path A)** | supergateway + Code Mode tools | `bash scripts/start-mcp-sse.sh` → `localhost:8080` |
+| **Excel — local, Windows (Path A)** | supergateway + Code Mode tools | `scripts\start-mcp-sse.ps1` → `localhost:8080` |
+| **Excel — BTP deployed (Path B)** | gavdi/cap-mcp plugin | HTTP/SSE at `/mcp`, no admin needed (see note below) |
 | Quick PoC, no code changes | odata_mcp_go | Auto-discovers from `$metadata`, single binary |
+
+> **No org admin? No problem.** Register the MCP URL as a *personal connector* in your own `claude.ai` Settings → Integrations. No organization admin needed for personal testing.
+> See the full guide: [Testing Without an Org Admin](docs/claude-for-excel.md#testing-without-an-org-admin--two-paths).
 
 > For detailed setup instructions, see [External Integration Paths](docs/integration-paths.md) and [Claude for Excel Integration](docs/claude-for-excel.md).
 
@@ -314,7 +328,7 @@ sequenceDiagram
 
 | Guide | Description |
 |-------|------------|
-| [Claude for Excel](docs/claude-for-excel.md) | Connect flight data tools to Claude's Excel add-in — business users query data in plain English from spreadsheets |
+| [Claude for Excel](docs/claude-for-excel.md) | Connect flight data tools to Claude's Excel add-in. Covers **Path A** (local, Windows + macOS, no admin) and **Path B** (BTP deployed, no admin). Includes architecture diagrams, per-platform scripts, and how to promote to full team access. |
 | [External Integration Paths](docs/integration-paths.md) | Three ways to connect external MCP servers: gavdi/cap-mcp (merged plugin), CData OData (standalone Java), odata_mcp_go (standalone Go) — architecture comparison and step-by-step setup |
 
 ---
@@ -389,7 +403,7 @@ BAS is SAP's cloud IDE — think VS Code in your browser, pre-configured for SAP
 2. **Create a Dev Space** → Choose "Full Stack Cloud Application" (includes CDS tools, CF CLI, and HANA tools)
 3. **Clone the repo**:
    ```bash
-   git clone https://github.com/AKS91/sflights-mcp.git
+   git clone https://github.com/MindsetConsulting/sflight-mcp.git
    cd sflights-mcp
    npm install
    ```
@@ -422,6 +436,9 @@ claude
 
 ## Desktop / Laptop Setup (VS Code)
 
+> Works on macOS, Linux, and Windows. Claude Code CLI requires macOS/Linux/WSL2.
+> On Windows, install [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) (`wsl --install`) for Claude Code.
+
 ### Prerequisites
 
 | What | Install With | Version |
@@ -429,13 +446,13 @@ claude
 | Node.js | [nvm](https://github.com/nvm-sh/nvm) or [download](https://nodejs.org/) | 18 or later |
 | VS Code | [download](https://code.visualstudio.com/) | Latest |
 | CDS Development Kit | `npm install -g @sap/cds-dk` | ^9 |
-| Claude Code | `npm install -g @anthropic-ai/claude-code` | Latest |
+| Claude Code | `npm install -g @anthropic-ai/claude-code` (macOS/Linux/WSL2 only) | Latest |
 
 ### Setup Steps
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/AKS91/sflights-mcp.git
+git clone https://github.com/MindsetConsulting/sflight-mcp.git
 cd sflights-mcp
 npm install
 
@@ -566,24 +583,30 @@ sflights-mcp/
   app/router/               # Managed approuter for BTP deployment
     xs-app.json             # Route config with XSUAA auth
   scripts/
-    start-mcp-sse.sh        # Launch MCP server as HTTP/SSE for Claude for Excel
+    setup.sh                # One-shot setup (macOS/Linux/WSL2)
+    setup.ps1               # One-shot setup (Windows PowerShell)
+    start-mcp-sse.sh        # Launch MCP server as HTTP/SSE — macOS/Linux/WSL2 (Path A)
+    start-mcp-sse.ps1       # Launch MCP server as HTTP/SSE — Windows PowerShell (Path A)
   test/
-    mcp-test.sh             # MCP Inspector CLI tests for all 17 tools
+    mcp-test.sh             # MCP Inspector CLI tests
     mcp-test-questions.sh   # 10 example SQL queries via MCP
+    mcp-code-mode-test.sh   # Code Mode E2E tests (9 assertions)
     auth-test.sh            # OAuth2 token + BTP API call test
     odata-queries.http      # OData V4 query test suite (VS Code REST Client)
     mcp-questions.http      # 20 AI questions for Claude Code
   docs/                     # Integration guides
     claude-for-excel.md     # Claude for Excel integration (local + BTP)
     integration-paths.md    # External MCP server comparison (3 paths)
-  mcp-server/               # AI-Powered MCP Server (17 tools)
+  mcp-server/               # AI-Powered MCP Server (2 Code Mode tools)
     src/
-      index.ts              # MCP Server class with stdio transport
-      cap-tools.ts          # Tool definitions with schemas and handlers
-      cds-executor.ts       # Hybrid execution engine (direct CDS binary + cache)
-      output-formatter.ts   # Data to markdown table conversion
+      index.ts              # MCP Server class with stdio transport (v2.0.0)
+      code-mode-tools.ts    # cap_search + cap_execute tool definitions
+      sandbox-runner.ts     # Subprocess sandbox orchestration
+      cds-executor.ts       # CDS compile + shell execution + CSN cache
     scripts/
       query-runner.cjs      # CDS + SQLite query runner (boots in-memory DB)
+      search-sandbox.cjs    # Isolated search VM (cap_search)
+      execute-sandbox.cjs   # Isolated execute VM (cap_execute)
   mta.yaml                  # MTA deployment descriptor (3 modules)
   xs-security.json          # XSUAA security config (admin + viewer roles)
   package.json              # Root project dependencies
@@ -642,7 +665,7 @@ Base URL (local): `http://localhost:4004`
 
 ## Origin
 
-This project was transformed from [sflights-mcp](https://github.com/AKS91/sflights-mcp) — originally a HANA XSA HDI-only project with `.hdbcds` tables and `.hdbtabledata` imports. The transformation modernized it to SAP CAP CDS with full OData V4 services, BTP deployment, and AI-powered data exploration through MCP.
+This project was transformed from [sflights-mcp](https://github.com/MindsetConsulting/sflight-mcp) — originally a HANA XSA HDI-only project with `.hdbcds` tables and `.hdbtabledata` imports. The transformation modernized it to SAP CAP CDS with full OData V4 services, BTP deployment, and AI-powered data exploration through MCP.
 
 ## License
 

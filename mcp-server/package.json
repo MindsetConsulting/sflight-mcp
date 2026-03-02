@@ -1,0 +1,25 @@
+{
+  "name": "sflights-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP Server for the sflights-mcp CAP project — model introspection, data queries, and project management tools",
+  "type": "module",
+  "main": "build/index.js",
+  "bin": {
+    "cap-mcp-server": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "dev": "tsc --watch"
+  },
+  "keywords": ["mcp", "cap", "cds", "sap", "hana", "odata", "sflight"],
+  "author": "Amit Shukla",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "typescript": "^5"
+  }
+}

@@ -8,7 +8,8 @@ default-*.json
 gen/
 node_modules/
 target/
-src/
+/src/
+!mcp-server/src/
 # Web IDE, App Studio
 .che/
 .gen/
@@ -34,7 +35,8 @@ mta_archives/
 .gemini
 .eclipse
 .cursor
-.claude
+.claude/*
+!.claude/skills/
 .github
 *.settings
 @cap-js/cds-typer
@@ -215,10 +217,10 @@ dist
 .env
 db/@cds-models
 *.sql
-tools/annotation-validation
+#tools/annotation-validation
 .mcp.json
-mcp-*
+#mcp-*
 *.txt
 *.text
-test/
-tools/
+#test/
+#tools/

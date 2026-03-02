@@ -12,6 +12,8 @@ build-parameters:
       commands:
         - npm ci
         - npx cds build --production
+        - mkdir -p gen/srv/scripts
+        - cp scripts/patch-mcp-resources.js gen/srv/scripts/
 
 modules:
   - name: sflights-mcp-srv
@@ -19,7 +21,7 @@ modules:
     path: gen/srv
     parameters:
       buildpack: nodejs_buildpack
-      memory: 256M
+      memory: 2G
     provides:
       - name: srv-api
         properties:
@@ -33,7 +35,7 @@ modules:
     path: gen/db
     parameters:
       buildpack: nodejs_buildpack
-      memory: 256M
+      memory: 2G
     requires:
       - name: sflights-mcp-db
 

@@ -2,28 +2,38 @@
   "name": "sflights-mcp",
   "version": "1.0.0",
   "description": "SAP Flight Model — BTP CAP CDS Project",
-  "repository": "https://github.com/AKS91/sflights-mcp",
+  "repository": "https://github.com/MindsetConsulting/sflight-mcp",
   "license": "MIT",
   "dependencies": {
     "@sap/cds": "^9",
     "@cap-js/hana": "^2",
     "@sap/xssec": "^4",
     "@gavdi/cap-mcp": "^1",
-    "express": "^4"
+    "express": "^4",
+    "hana-cli": "^3",
+    "@modelcontextprotocol/sdk": "^1"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^2",
     "@sap/cds-dk": "^9",
-    "hana-cli": "3"
+    "cds-swagger-ui-express": "^0",
+    "@sap/cds-lsp": "^9",
+    "@sap/eslint-plugin-cds": "^4",
+    "@cap-js/cds-typer": "^0"
   },
   "scripts": {
     "start": "cds-serve",
-    "watch": "cds watch"
+    "watch": "cds watch",
+    "build": "cds build && cds build --production",
+    "test": "cds test",
+    "postinstall": "node scripts/patch-mcp-resources.js || true"
   },
   "cds": {
     "mcp": {
       "name": "sflights-mcp",
-      "auth": "inherit"
+      "auth": "none",
+      "wrap_entities_to_actions": true,
+      "wrap_entity_modes": ["query", "get"]
     },
     "requires": {
       "db": {
@@ -34,7 +44,7 @@
           "kind": "hana-cloud"
         },
         "auth": {
-          "kind": "xsuaa"
+          "kind": "dummy"
         }
       },
       "[hybrid]": {
